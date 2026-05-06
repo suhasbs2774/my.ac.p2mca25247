@@ -16,16 +16,12 @@ func InitDB() {
 		log.Fatal(err)
 	}
 
-	err = db.Ping()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	createTable()
+	createTables()
 }
 
-func createTable() {
-	query := `
+func createTables() {
+	// Notifications table
+	_, err := db.Exec(`
 	CREATE TABLE IF NOT EXISTS notifications (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		user_id TEXT,
@@ -35,9 +31,18 @@ func createTable() {
 		is_read BOOLEAN DEFAULT FALSE,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
-	`
+	`)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	_, err := db.Exec(query)
+	// Users table (for email)
+	_, err = db.Exec(`
+	CREATE TABLE IF NOT EXISTS users (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		email TEXT
+	);
+	`)
 	if err != nil {
 		log.Fatal(err)
 	}

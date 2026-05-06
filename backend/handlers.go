@@ -1,45 +1,29 @@
 package main
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 )
 
-// CREATE
 func CreateNotification(c *gin.Context) {
 	var n Notification
 
 	if err := c.BindJSON(&n); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 
-	result, err := db.Exec(
+	db.Exec(
 		"INSERT INTO notifications(user_id, title, message, type) VALUES (?, ?, ?, ?)",
 		n.UserID, n.Title, n.Message, n.Type,
 	)
 
-	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
-
-	id, _ := result.LastInsertId()
-	n.ID = int(id)
-
-	c.JSON(201, n)
+	c.JSON(200, gin.H{"message": "Notification created"})
 }
 
-// GET ALL
 func GetNotifications(c *gin.Context) {
 	userID := c.Query("user_id")
 
-	rows, err := db.Query("SELECT * FROM notifications WHERE user_id=?", userID)
-	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
+	rows, _ := db.Query("SELECT * FROM notifications WHERE user_id=?", userID)
 	defer rows.Close()
 
 	var list []Notification
@@ -53,37 +37,32 @@ func GetNotifications(c *gin.Context) {
 	c.JSON(200, list)
 }
 
-// MARK AS READ
-func MarkAsRead(c *gin.Context) {
-	id := c.Param("id")
+func NotifyAll(c *gin.Context) {
+	var req struct {
+		Title   string `json:"title"`
+		Message string `json:"message"`
+		Type    string `json:"type"`
+	}
 
-	_, err := db.Exec("UPDATE notifications SET is_read=TRUE WHERE id=?", id)
-	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(200, gin.H{"message": "Marked as read"})
-}
+	rows, _ := db.Query("SELECT email FROM users")
+	defer rows.Close()
 
-// DELETE
-func DeleteNotification(c *gin.Context) {
-	id := c.Param("id")
+	for rows.Next() {
+		var email string
+		rows.Scan(&email)
 
-	_, err := db.Exec("DELETE FROM notifications WHERE id=?", id)
-	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
+		SendEmail(email, req.Title, req.Message)
+
+		db.Exec(
+			"INSERT INTO notifications(user_id, title, message, type) VALUES (?, ?, ?, ?)",
+			email, req.Title, req.Message, req.Type,
+		)
 	}
 
-	c.JSON(200, gin.H{"message": "Deleted"})
-}
-
-func UnreadCount(c *gin.Context) {
-	userID := c.Query("user_id")
-
-	var count int
-	db.QueryRow("SELECT COUNT(*) FROM notifications WHERE user_id=? AND is_read=FALSE", userID).Scan(&count)
-
-	c.JSON(200, gin.H{"unread_count": count})
+	c.JSON(200, gin.H{"message": "Sent to all students"})
 }

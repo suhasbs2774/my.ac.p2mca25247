@@ -7,22 +7,17 @@ func main() {
 
 	r := gin.Default()
 
-	// Root test
+	// Test route
 	r.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{"message": "Server is running"})
+		c.JSON(200, gin.H{"message": "Server running"})
 	})
 
 	api := r.Group("/api")
 	{
 		api.POST("/notifications", CreateNotification)
 		api.GET("/notifications", GetNotifications)
-		api.PUT("/notifications/:id/read", MarkAsRead)
-		api.DELETE("/notifications/:id", DeleteNotification)
-		api.GET("/notifications/unread-count", UnreadCount)
+		api.POST("/notify-all", NotifyAll)
 	}
-	r.POST("/test", func(c *gin.Context) {
-		c.JSON(200, gin.H{"message": "POST working"})
-	})
 
 	r.Run(":8080")
 }
