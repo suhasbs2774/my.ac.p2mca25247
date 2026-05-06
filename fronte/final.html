@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notification System</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #f4f6f9;
+      padding: 30px;
+    }
+
+    .box {
+      width: 450px;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      color: white;
+      background: green;
+      border-radius: 5px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 15px;
+    }
+
+    li {
+      background: #eee;
+      margin-top: 6px;
+      padding: 10px;
+      border-radius: 6px;
+    }
+
+    #status {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+
+  <h2> Notification Dashboard</h2>
+
+  <button onclick="notifyAndLoad()">Notify </button>
+
+  <p id="status"></p>
+
+  <h3>All Notifications</h3>
+  <ul id="list"></ul>
+
+</div>
+
+<script>
+
+const API_URL = "http://localhost:8080/api";
+
+
+
+async function notifyAndLoad() {
+
+  document.getElementById("status").innerText = "Loading...";
+
+  try {
+    
+    await fetch(`${API_URL}/notify-all`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "System Notification",
+        message: "New update available",
+        type: "info"
+      })
+    });
+
+    const res = await fetch(`${API_URL}/notifications`);
+    const data = await res.json();
+
+    const list = document.getElementById("list");
+    list.innerHTML = "";
+
+    if (!data || data.length === 0) {
+      list.innerHTML = "<li>No notifications found</li>";
+      document.getElementById("status").innerText = "Done";
+      return;
+    }
+
+    data.forEach(n => {
+      const li = document.createElement("li");
+      li.innerText = `${n.title} - ${n.message}`;
+      list.appendChild(li);
+    });
+
+    document.getElementById("status").innerText = " Loaded ";
+
+  } catch (err) {
+    document.getElementById("status").innerText = "Error  ";
+  }
+}
+
+</script>
+
+</body>
+</html>
