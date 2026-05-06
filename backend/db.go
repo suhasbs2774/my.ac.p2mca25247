@@ -20,7 +20,7 @@ func InitDB() {
 }
 
 func createTables() {
-	// Notifications table
+
 	_, err := db.Exec(`
 	CREATE TABLE IF NOT EXISTS notifications (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,7 +36,6 @@ func createTables() {
 		log.Fatal(err)
 	}
 
-	// Users table (for email)
 	_, err = db.Exec(`
 	CREATE TABLE IF NOT EXISTS users (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,

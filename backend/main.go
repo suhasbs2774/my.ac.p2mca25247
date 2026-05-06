@@ -7,7 +7,6 @@ func main() {
 
 	r := gin.Default()
 
-	// Test route
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "Server running"})
 	})
